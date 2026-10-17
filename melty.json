@@ -1,37 +1,24 @@
 {
   "version": "1.0.0",
-  "title": "Island Outbreak",
-  "tagline": "Left 4 Dead 2 safe rooms, brought to you by Hello Kitty Island Adventure.",
-  "description": "Play Left 4 Dead 2 with Hello Kitty Island Adventure really in it. Every safe room is themed by a real HKIA island region (Merry Meadows, Gemstone Mountain, Icy Peak, Rainbow Reef, Cloud Island, Heart of the Island and more), read straight from your own installed copy of Hello Kitty Island Adventure while the game runs — nothing is copied out of either game. An island supply treat drawn from HKIA's own items (strawberry, cactus cream, almond, chocolate coin, heart pie) is announced for the team. Up to 4 players co-op on your own listen server; friends join with one click via Melty.",
+  "title": "HKIA Island Explorer",
+  "tagline": "Explore Hello Kitty Island Adventure's real islands, items and music — read straight from your own install.",
+  "description": "HKIA Island Explorer is an .exe mod for Hello Kitty Island Adventure. It reads real HKIA content — island regions, items, and music tracks — straight from your own installed copy of Hello Kitty Island Adventure while it runs, and lets you browse them. Nothing is ever copied out of or modified in your HKIA install. Single player.",
   "games": [
-    { "slug": "left-4-dead-2", "role": "primary" },
-    { "slug": "custom-hello-kitty-island-adventure", "role": "companion" }
+    { "slug": "custom-hello-kitty-island-adventure", "role": "primary" }
   ],
-  "loaders": ["sourcemod", "metamod-source"],
+  "loaders": [],
   "components": [
-    { "fileName": "islandoutbreak.smx", "destination": "addons/sourcemod/plugins/islandoutbreak.smx" }
+    { "fileName": "hkia-island-explorer.exe", "destination": "{managed}/hkia-island-explorer/hkia-island-explorer.exe" }
   ],
   "launch": {
-    "kind": "game",
-    "exe": "left4dead2.exe",
-    "args": ["-insecure", "-island_path", "{game:custom-hello-kitty-island-adventure}", "-melty_props", "{localappdata}/island-outbreak/melty.properties", "-melty_log", "{localappdata}/island-outbreak/melty.log"]
+    "kind": "exe",
+    "exe": "{managed}/hkia-island-explorer/hkia-island-explorer.exe",
+    "args": ["-gamepath", "{game:custom-hello-kitty-island-adventure}"]
   },
-  "multiplayer": {
-    "maxPlayers": 4,
-    "connect": {
-      "address": {
-        "log": "{localappdata}/island-outbreak/melty.log",
-        "after": "Melty join address: "
-      },
-      "joinFile": {
-        "path": "{localappdata}/island-outbreak/melty.properties",
-        "key": "join"
-      }
-    }
-  },
+  "multiplayer": null,
   "test": {
     "checks": [
-      { "log": "addons/sourcemod/logs/islandoutbreak.log", "pattern": "MELTY_TEST_ISLAND_ACTIVE:" }
+      { "log": "{localappdata}/island-outbreak/melty.log", "pattern": "MELTY_TEST_ISLAND_ACTIVE:" }
     ]
   },
   "credits": "riley 13",

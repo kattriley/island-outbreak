@@ -1,12 +1,12 @@
 {
   "sheet": "systems",
-  "description": "Every system the mashup touches in Left 4 Dead 2. Each row generates one piece of code in source/islandoutbreak.sp.",
-  "columns": ["id", "system", "hook", "readsFromHKIA", "writesToLog", "chatAnnouncement", "testMarker", "inMvp"],
+  "description": "Every system the HKIA Island Explorer exe touches. Each row generates one piece of code in source/hkia-island-explorer.cs.",
+  "columns": ["id", "system", "hook", "readsFromHKIA", "writesToLog", "testMarker", "inMvp"],
   "rows": [
-    { "id": "hkia_loader", "system": "Read HKIA island data at startup from the player's own install", "hook": "OnPluginStart + OnMapStart", "readsFromHKIA": "StreamingAssets/EntityScenes/*.entities under {game:custom-hello-kitty-island-adventure} via ISLAND_PATH env var", "writesToLog": false, "chatAnnouncement": false, "testMarker": false, "inMvp": true },
-    { "id": "safe_room_theme", "system": "Theme the safe room on a real HKIA region; announce it in chat", "hook": "OnClientPutInServer (host player spawn)", "readsFromHKIA": "region name picked from HKIA entity files at runtime", "writesToLog": false, "chatAnnouncement": "This safe room is themed on <Region> from Hello Kitty Island Adventure", "testMarker": false, "inMvp": true },
-    { "id": "island_supply", "system": "Call out an island supply treat drawn from real HKIA items", "hook": "same as safe_room_theme", "readsFromHKIA": "item name picked from HKIA entity files at runtime", "writesToLog": false, "chatAnnouncement": "Island supply treat: <Item>", "testMarker": false, "inMvp": true },
-    { "id": "test_marker", "system": "Write a test marker so Melty's test can confirm the mashup played, not only started", "hook": "same as safe_room_theme", "readsFromHKIA": false, "writesToLog": "addons/sourcemod/logs/islandoutbreak.log: MELTY_TEST_ISLAND_ACTIVE:<region>", "chatAnnouncement": false, "testMarker": true, "inMvp": true },
-    { "id": "multiplayer_host", "system": "Publish the listen server address to Melty's join log so friends can connect with one click", "hook": "OnClientPutInServer (host player)", "readsFromHKIA": false, "writesToLog": "islandoutbreak.log: Melty hosting at <ip>:<port>", "chatAnnouncement": false, "testMarker": false, "inMvp": true }
+    { "id": "hkia_path", "system": "Accept HKIA install path from Melty launch argument", "hook": "exe startup (Main)", "readsFromHKIA": "{game:custom-hello-kitty-island-adventure} passed as -gamepath", "writesToLog": false, "chatAnnouncement": false, "testMarker": false, "inMvp": true },
+    { "id": "scan_entities", "system": "Scan HKIA StreamingAssets/EntityScenes/*.entities for region and item tokens", "hook": "exe startup", "readsFromHKIA": "entity files under {game}/Hello Kitty_Data/StreamingAssets/EntityScenes", "writesToLog": false, "chatAnnouncement": false, "testMarker": false, "inMvp": true },
+    { "id": "scan_music", "system": "Scan HKIA StreamingAssets/MX_Score_*.bank for music tracks", "hook": "exe startup", "readsFromHKIA": "music banks under {game}/Hello Kitty_Data/StreamingAssets", "writesToLog": false, "chatAnnouncement": false, "testMarker": false, "inMvp": true },
+    { "id": "display_content", "system": "Print discovered regions, items, and music to console", "hook": "exe startup", "readsFromHKIA": "scanned HKIA content", "writesToLog": true, "chatAnnouncement": false, "testMarker": false, "inMvp": true },
+    { "id": "test_marker", "system": "Write test marker so Melty's test confirms the mod played, not only started", "hook": "exe startup", "readsFromHKIA": false, "writesToLog": "{localappdata}/island-outbreak/melty.log: MELTY_TEST_ISLAND_ACTIVE:1", "chatAnnouncement": false, "testMarker": true, "inMvp": true }
   ]
 }

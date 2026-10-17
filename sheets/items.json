@@ -1,15 +1,16 @@
 {
   "sheet": "items",
-  "description": "Hello Kitty Island Adventure items, discovered from real entity-name strings in the player's HKIA install (StreamingAssets/EntityScenes/*.entities). Read at runtime from {game:custom-hello-kitty-island-adventure}; never copied.",
-  "columns": ["id", "name", "sourceHint", "inMvp"],
+  "description": "Hello Kitty Island Adventure items, discovered from real entity-name strings in the player's HKIA install (StreamingAssets/EntityScenes/*.entities). Read at runtime from {game}; never copied.",
+  "columns": ["token", "displayName", "inMvp"],
   "rows": [
-    { "id": "strawberry", "name": "Strawberry", "sourceHint": "IslandChampion_BoulderDrop_StrawberryPickupPrototype", "inMvp": true },
-    { "id": "cactus_cream", "name": "Cactus Cream", "sourceHint": "IslandChampion_BoulderDrop_CactusCreamPickupPrototype", "inMvp": true },
-    { "id": "almond", "name": "Almond", "sourceHint": "IslandChampion_BoulderDrop_AlmondPrototype", "inMvp": true },
-    { "id": "chocolate_coin", "name": "Chocolate Coin", "sourceHint": "IslandChampion_BoulderDrop_ChocolateCoinPickupPrototype", "inMvp": true },
-    { "id": "heart_pie", "name": "Heart Pie", "sourceHint": "HeartPiePrototype", "inMvp": true },
-    { "id": "fruity_pizza", "name": "Fruity Pizza", "sourceHint": "MysteriousCritter_FruityPizza", "inMvp": true },
-    { "id": "shortcake", "name": "Shortcake", "sourceHint": "RhymesRecompence_Shortcakes_Prototype", "inMvp": true },
-    { "id": "giant_cupcake", "name": "Giant Cupcake", "sourceHint": "TheBigBoutiqueReveal_GiantCupcake_Prototype", "inMvp": true }
+    { "token": "Strawberry", "displayName": "Strawberry", "inMvp": true },
+    { "token": "CactusCream", "displayName": "Cactus Cream", "inMvp": true },
+    { "token": "Almond", "displayName": "Almond", "inMvp": true },
+    { "token": "ChocolateCoin", "displayName": "Chocolate Coin", "inMvp": true },
+    { "token": "HeartPie", "displayName": "Heart Pie", "inMvp": true },
+    { "token": "FruityPizza", "displayName": "Fruity Pizza", "inMvp": true },
+    { "token": "Shortcake", "displayName": "Shortcake", "inMvp": true },
+    { "token": "Cupcake", "displayName": "Giant Cupcake", "inMvp": true },
+    { "token": "Cake", "displayName": "Cake", "inMvp": true }
   ]
 }

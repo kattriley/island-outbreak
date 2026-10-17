@@ -1,10 +1,8 @@
 {
   "sheet": "hooks",
-  "description": "SourceMod hooks implemented by the mod, one row per hook, mapped to systems.",
+  "description": "Entry points implemented by the HKIA Island Explorer exe, one row per hook, mapped to systems.",
   "columns": ["hook", "firesWhen", "systems", "codeGenerated"],
   "rows": [
-    { "hook": "OnPluginStart", "firesWhen": "mod loads", "systems": "hkia_loader", "codeGenerated": "read ISLAND_PATH env var; scan HKIA entity files; pick region + item" },
-    { "hook": "OnMapStart", "firesWhen": "each L4D2 map starts", "systems": "hkia_loader", "codeGenerated": "reset theme flag; re-scan HKIA data" },
-    { "hook": "OnClientPutInServer", "firesWhen": "a client joins the server", "systems": "safe_room_theme, island_supply, test_marker, multiplayer_host", "codeGenerated": "host player: write Melty hosting address line; then apply island theme + chat + test marker" }
+    { "hook": "Main(string[] args)", "firesWhen": "exe launches", "systems": "hkia_path, scan_entities, scan_music, display_content, test_marker", "codeGenerated": "parse -gamepath; scan EntityScenes + MX_Score banks; print results; write melty.log test marker" }
   ]
 }
