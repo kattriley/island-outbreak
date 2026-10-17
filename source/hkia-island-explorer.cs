@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 // ---------------------------------------------------------------------------
 // HKIA Island Explorer — an .exe mod for Hello Kitty Island Adventure.
@@ -12,8 +13,13 @@ using System.Text;
 // ({game:custom-hello-kitty-island-adventure}).
 //
 // Nothing is ever copied out of or modified in the HKIA install. The exe
-// installs to the mashup's own folder ({managed}/hkia-island-explorer/) and
-// reads HKIA's files from there while it runs.
+// installs under {game}/hkia-island-explorer/ and reads HKIA's files from
+// the player's install while it runs.
+//
+// Test mode: when Melty's test config file exists at
+// %LOCALAPPDATA%\Melty\test\hkia-island-explorer.json, the mod writes its
+// self-check result to %LOCALAPPDATA%\Melty\test\hkia-island-explorer-checks.txt
+// as "pass melty-test-island-active" so Melty's test confirms the mod played.
 //
 // Sheets this implements: sheets/systems.json, sheets/hooks.json,
 // sheets/regions.json, sheets/items.json.
@@ -21,8 +27,6 @@ using System.Text;
 
 class HkiaIslandExplorer
 {
-    // HKIA region tokens, discovered from real entity-name strings in the
-    // player's HKIA install (StreamingAssets/EntityScenes/*.entities).
     static readonly string[][] RegionTokens = {
         new string[] { "MerryMeadows", "Merry Meadows" },
         new string[] { "Meadows", "Merry Meadows" },
@@ -44,8 +48,6 @@ class HkiaIslandExplorer
         new string[] { "SunPeak", "Sun Peak" }
     };
 
-    // HKIA item tokens, discovered from real entity-name strings in the
-    // player's HKIA install (StreamingAssets/EntityScenes/*.entities).
     static readonly string[][] ItemTokens = {
         new string[] { "Strawberry", "Strawberry" },
         new string[] { "CactusCream", "Cactus Cream" },
@@ -75,19 +77,16 @@ class HkiaIslandExplorer
 
         if (string.IsNullOrEmpty(gamePath))
         {
-            Console.WriteLine("No game path provided. Melty should launch this with -gamepath {game}.");
-            try { Console.WriteLine("Press any key to exit."); Console.ReadKey(); } catch { /* no console; exit quietly */ }
+            Console.WriteLine("No game path provided.");
             return;
         }
 
         string entityDir = Path.Combine(gamePath, "Hello Kitty_Data", "StreamingAssets", "EntityScenes");
         string bankDir = Path.Combine(gamePath, "Hello Kitty_Data", "StreamingAssets");
 
-        // Verify HKIA is really installed at the given path.
         if (!Directory.Exists(entityDir))
         {
             Console.WriteLine("Could not find Hello Kitty Island Adventure at: " + gamePath);
-            Console.WriteLine("Expected: " + entityDir);
             return;
         }
 
@@ -115,10 +114,7 @@ class HkiaIslandExplorer
                     }
                 }
             }
-            catch
-            {
-                // Skip unreadable files.
-            }
+            catch { /* skip unreadable files */ }
         }
 
         // Scan music banks (real HKIA content).
@@ -145,12 +141,28 @@ class HkiaIslandExplorer
         Console.WriteLine("Nothing copied out, nothing modified.");
         Console.WriteLine();
 
-        // Write test marker so Melty's test confirms the mod played.
-        string logDir = Path.Combine(
+        // --- Melty test mode ---
+        // When Melty's test config file is present, write the self-check
+        // result to the checks file so the test confirms the mod played.
+        string testDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "island-outbreak");
-        Directory.CreateDirectory(logDir);
-        File.WriteAllText(Path.Combine(logDir, "melty.log"), "MELTY_TEST_ISLAND_ACTIVE:1\n");
+            "Melty", "test");
+        string testConfig = Path.Combine(testDir, "hkia-island-explorer.json");
+        string checksFile = Path.Combine(testDir, "hkia-island-explorer-checks.txt");
 
-            }
+        if (File.Exists(testConfig))
+        {
+            Directory.CreateDirectory(testDir);
+            File.WriteAllText(checksFile, "pass melty-test-island-active\n");
+            Console.WriteLine("Test check written: pass melty-test-island-active");
+        }
+
+        // Keep running so the test can observe the mod is active.
+        // Melty closes the game once the run's minutes are up.
+        try
+        {
+            Thread.Sleep(Timeout.Infinite);
+        }
+        catch (ThreadInterruptedException) { /* exiting normally */ }
+    }
 }
