@@ -1,0 +1,24 @@
+{
+  "sheet": "regions",
+  "description": "Hello Kitty Island Adventure island regions, discovered from real entity-name strings in the player's HKIA install (StreamingAssets/EntityScenes/*.entities). Read at runtime from {game:custom-hello-kitty-island-adventure}; never copied.",
+  "columns": ["id", "name", "sourceHint", "inMvp"],
+  "rows": [
+    { "id": "merry_meadows", "name": "Merry Meadows", "sourceHint": "FastTravel_MeadowsHamlet, FastTravel_MeadowsOverlook", "inMvp": true },
+    { "id": "gemstone_mountain", "name": "Gemstone Mountain", "sourceHint": "ME_GemstonePrimaryInternal, MagicArchPrototype_Gemstone_*", "inMvp": true },
+    { "id": "icy_peak", "name": "Icy Peak", "sourceHint": "ME_IcyPeakExternal, FastTravel_IcyPeak", "inMvp": true },
+    { "id": "rainbow_reef", "name": "Rainbow Reef", "sourceHint": "ME_ReefInternal, BB_BreakableBoulder_RainbowReef", "inMvp": true },
+    { "id": "cloud_island", "name": "Cloud Island", "sourceHint": "FastTravel_CloudIsland, CloudLedPanelGroup*", "inMvp": true },
+    { "id": "heart_of_the_island", "name": "Heart of the Island", "sourceHint": "HeartOfTheIslandPrototype, FastTravel_HeartoftheIsland", "inMvp": true },
+    { "id": "blizzard_peak", "name": "Blizzard Peak", "sourceHint": "ServerInteriorRegion_BlizzardPeak, FastTravel_BlizzardPeak", "inMvp": true },
+    { "id": "false_peak", "name": "False Peak", "sourceHint": "ServerInteriorRegion_FalsePeak, FastTravel_FalsePeak", "inMvp": true },
+    { "id": "hopscotch_islands", "name": "Hopscotch Islands", "sourceHint": "ServerInteriorRegion_HopscotchIslands", "inMvp": true },
+    { "id": "moon_island", "name": "Moon Island", "sourceHint": "FastTravelMailbox_MoonIsland", "inMvp": true },
+    { "id": "gemstone_town", "name": "Gemstone Town", "sourceHint": "FastTravel_GemstoneTown", "inMvp": true },
+    { "id": "gem_beach", "name": "Gem Beach", "sourceHint": "FastTravel_GemBeach", "inMvp": true },
+    { "id": "city_skyline", "name": "City Skyline", "sourceHint": "FastTravel_CitySkyline", "inMvp": true },
+    { "id": "cozy_islands", "name": "Cozy Islands", "sourceHint": "FastTravel_CozyIslands", "inMvp": true },
+    { "id": "home_island", "name": "Home Island", "sourceHint": "FastTravelMailbox_HomeIsland", "inMvp": true },
+    { "id": "seaside_sanctuary", "name": "Seaside Sanctuary", "sourceHint": "SeasideSanctuary_InvisibleGroundColliderPrototype", "inMvp": true },
+    { "id": "sun_peak", "name": "Sun Peak", "sourceHint": "FastTravelWWStainedGlassPrototype_SunPeak", "inMvp": true }
+  ]
+}

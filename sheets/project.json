@@ -1,0 +1,13 @@
+{
+  "mashup": "Island Outbreak",
+  "tagline": "Left 4 Dead 2 safe rooms, brought to you by Hello Kitty Island Adventure.",
+  "description": "Play Left 4 Dead 2 with Hello Kitty Island Adventure really in it. Every safe room is themed by a real HKIA island region (Merry Meadows, Gemstone Mountain, Icy Peak, Rainbow Reef, Cloud Island, Heart of the Island and more), read straight from your own installed copy of Hello Kitty Island Adventure while the game runs — nothing is copied out of either game. An island supply treat drawn from HKIA's own items (strawberry, cactus cream, almond, chocolate coin, heart pie) is announced for the team. Up to 4 players co-op on your own listen server; friends join with one click via Melty.",
+  "hostGame": "left-4-dead-2",
+  "hostRole": "primary",
+  "companionGames": ["custom-hello-kitty-island-adventure"],
+  "companionRole": "companion",
+  "playerCount": "1-4 co-op",
+  "whatPlayerDoes": "Spawn into an L4D2 campaign safe room themed to a real HKIA region, hear the island supply treat called out, then push the campaign with friends.",
+  "firstMinute": "You spawn in the safe room; chat announces which HKIA region it is themed on and which island supply treat awaits; you heal up and open the safe room door.",
+  "build": "source/islandoutbreak.sp compiled to addons/sourcemod/plugins/islandoutbreak.smx, running under SourceMod + Metamod:Source on the L4D2 listen server"
+}

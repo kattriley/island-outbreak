@@ -1,0 +1,36 @@
+{
+  "version": "1.0.0",
+  "title": "Island Outbreak",
+  "tagline": "Left 4 Dead 2 safe rooms, brought to you by Hello Kitty Island Adventure.",
+  "description": "Play Left 4 Dead 2 with Hello Kitty Island Adventure really in it. Every safe room is themed by a real HKIA island region (Merry Meadows, Gemstone Mountain, Icy Peak, Rainbow Reef, Cloud Island, Heart of the Island and more), read straight from your own installed copy of Hello Kitty Island Adventure while the game runs — nothing is copied out of either game. An island supply treat drawn from HKIA's own items (strawberry, cactus cream, almond, chocolate coin, heart pie) is announced for the team. Up to 4 players co-op on your own listen server; friends join with one click via Melty.",
+  "games": [
+    { "slug": "left-4-dead-2", "role": "primary" },
+    { "slug": "custom-hello-kitty-island-adventure", "role": "companion" }
+  ],
+  "loaders": ["sourcemod", "metamod-source"],
+  "components": [
+    { "fileName": "islandoutbreak.smx", "destination": "addons/sourcemod/plugins/islandoutbreak.smx" }
+  ],
+  "launch": {
+    "kind": "game",
+    "exe": "left4dead2.exe",
+    "args": ["-insecure", "-island_path", "{game:custom-hello-kitty-island-adventure}"]
+  },
+  "multiplayer": {
+    "maxPlayers": 4,
+    "connect": {
+      "address": {
+        "log": "addons/sourcemod/logs/islandoutbreak.log",
+        "after": "Melty hosting at "
+      }
+    }
+  },
+  "test": {
+    "checks": [
+      { "log": "addons/sourcemod/logs/islandoutbreak.log", "pattern": "MELTY_TEST_ISLAND_ACTIVE:" }
+    ]
+  },
+  "credits": "riley 13",
+  "license": "MIT",
+  "remix": "allowed"
+}
