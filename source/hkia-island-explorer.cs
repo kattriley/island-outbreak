@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Collections.Generic;
 using System.Text;
@@ -88,6 +89,21 @@ class HkiaIslandExplorer
         {
             Console.WriteLine("Could not find Hello Kitty Island Adventure at: " + gamePath);
             return;
+        }
+
+        // Launch HKIA in windowed mode so Melty can capture its window during the test.
+        // Unity games support -windowed and -screen-width/-screen-height on the command line.
+        string hkiaExe = Path.Combine(gamePath, "Hello Kitty.exe");
+        if (File.Exists(hkiaExe))
+        {
+            try
+            {
+                Process.Start(hkiaExe, "-windowed -screen-width 1280 -screen-height 720");
+            }
+            catch
+            {
+                // HKIA may already be running (Melty may have launched it); that's OK.
+            }
         }
 
         // Scan entity files for regions and items (real HKIA content).
