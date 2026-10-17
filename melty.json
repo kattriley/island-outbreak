@@ -14,14 +14,18 @@
   "launch": {
     "kind": "game",
     "exe": "left4dead2.exe",
-    "args": ["-insecure", "-island_path", "{game:custom-hello-kitty-island-adventure}"]
+    "args": ["-insecure", "-island_path", "{game:custom-hello-kitty-island-adventure}", "-melty_props", "{localappdata}/island-outbreak/melty.properties", "-melty_log", "{localappdata}/island-outbreak/melty.log"]
   },
   "multiplayer": {
     "maxPlayers": 4,
     "connect": {
       "address": {
-        "log": "addons/sourcemod/logs/islandoutbreak.log",
-        "after": "Melty hosting at "
+        "log": "{localappdata}/island-outbreak/melty.log",
+        "after": "Melty join address: "
+      },
+      "joinFile": {
+        "path": "{localappdata}/island-outbreak/melty.properties",
+        "key": "join"
       }
     }
   },

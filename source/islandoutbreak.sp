@@ -6,7 +6,6 @@
 #define MARKER_PREFIX "MELTY_TEST_ISLAND_ACTIVE"
 #define HOST_PREFIX "Melty join address: "
 #define JOIN_PREFIX "Melty joined: "
-#define FAIL_PREFIX "Melty join failed: "
 
 // ---------------------------------------------------------------------------
 // Island Outbreak — a Left 4 Dead 2 x Hello Kitty Island Adventure mashup.
@@ -23,7 +22,7 @@
 //   - When hosting: write "Melty join address: <ip>:<port>" to melty.log
 //     (passed as -melty_log).
 //   - When joining: connect to the address, write "Melty joined: <address>"
-//     or "Melty join failed: <why>" to melty.log.
+//     to melty.log.
 //
 // Sheets this implements: sheets/systems.json, sheets/hooks.json,
 // sheets/regions.json, sheets/items.json.
@@ -68,19 +67,17 @@ public void OnPluginStart()
 
     // --- Melty multiplayer: decide host vs join ---
     char props[512];
-    if (ReadFileString(g_MeltyProps, props, sizeof(props)))
+    if (ReadPropsFile(g_MeltyProps, props, sizeof(props)))
     {
-        char key[32];
         char val[256];
-        if (ParseKeyValue(props, "join", key, sizeof(key), val, sizeof(val)) && val[0] != '\0')
+        if (GetJoinValue(props, val, sizeof(val)) && val[0] != '\0')
         {
             g_IsJoiner = true;
             strcopy(g_JoinAddress, sizeof(g_JoinAddress), val);
             LogToFile("islandoutbreak.log", "Island Outbreak: join mode, target=%s", g_JoinAddress);
-            // Try connecting to the host's address right away.
             char cmd[160];
             Format(cmd, sizeof(cmd), "connect %s", g_JoinAddress);
-            engine.ServerCommand(cmd);
+            ServerCommand(cmd);
             return;
         }
     }
@@ -107,7 +104,9 @@ public void OnClientPutInServer(int client)
         GetClientIP(client, ip, sizeof(ip));
         ConVar portCvar = FindConVar("hostport");
         int port = portCvar ? GetConVarInt(portCvar) : 27015;
-        WriteMeltyLog("%s%s:%d", HOST_PREFIX, ip, port);
+        char msg[128];
+        Format(msg, sizeof(msg), "%s%s:%d", HOST_PREFIX, ip, port);
+        WriteMeltyLog(msg);
     }
 
     // Safe-room theme: the host player has spawned into the safe room.
@@ -123,7 +122,9 @@ public void OnClientConnected(int client)
 {
     if (g_IsJoiner && client == 1)
     {
-        WriteMeltyLog("%s%s", JOIN_PREFIX, g_JoinAddress);
+        char msg[256];
+        Format(msg, sizeof(msg), "%s%s", JOIN_PREFIX, g_JoinAddress);
+        WriteMeltyLog(msg);
     }
 }
 
@@ -141,15 +142,12 @@ stock void ApplyTheme()
     LogToFile("islandoutbreak.log", "%s:%s|%s", MARKER_PREFIX, g_Region, g_Item);
 }
 
-stock void WriteMeltyLog(const char[] format, any ...)
+stock void WriteMeltyLog(const char[] msg)
 {
     if (g_MeltyLog[0] == '\0')
     {
         return;
     }
-
-    char msg[256];
-    VFormat(msg, sizeof(msg), format);
 
     Handle h = OpenFile(g_MeltyLog, "a", false);
     if (h)
@@ -159,53 +157,71 @@ stock void WriteMeltyLog(const char[] format, any ...)
     }
 }
 
-// Read a file into a buffer.
-stock bool ReadFileString(char[] path, char[] out, int outlen)
+// Read a file's first line into a buffer.
+stock bool ReadPropsFile(char[] path, char[] out, int outlen)
 {
     Handle h = OpenFile(path, "r", false);
     if (!h)
     {
         return false;
     }
-    bool ok = ReadFileLine(h, out, outlen) != 0;
+    bool ok = ReadFileLine(h, out, outlen);
     CloseHandle(h);
     return ok;
 }
 
-// Parse "key=value" from a line of text.
-stock bool ParseKeyValue(char[] line, const char[] key, char[] kout, int klen, char[] vout, int vlen)
+// Check if line starts with "join=" and extract the value.
+stock bool GetJoinValue(char[] line, char[] val, int vlen)
 {
-    char eq[2];
-    eq[0] = '=';
-    eq[1] = '\0';
-    int idx = StrFind(line, eq);
-    if (idx == -1)
+    char prefix[8];
+    strcopy(prefix, sizeof(prefix), "join=");
+    int plen = strlen(prefix);
+    if (strlen(line) < plen)
     {
         return false;
     }
-    int klen2 = idx;
-    if (klen2 >= klen) klen2 = klen - 1;
-    strcopy(kout, klen2 + 1, line);
-    kout[klen2] = '\0';
-    // trim trailing spaces from key
-    while (klen2 > 0 && kout[klen2 - 1] == ' ') { kout[klen2 - 1] = '\0'; klen2--; }
+    for (int i = 0; i < plen; i++)
+    {
+        if (line[i] != prefix[i])
+        {
+            return false;
+        }
+    }
 
-    int vstart = idx + 1;
-    int vlen2 = strlen(line) - vstart;
-    if (vlen2 >= vlen) vlen2 = vlen - 1;
-    strcopy(vout, vlen2 + 1, line + vstart);
-    vout[vlen2] = '\0';
-    // trim leading/trailing spaces from value
+    int start = plen;
+    int len = strlen(line) - start;
+    if (len >= vlen) len = vlen - 1;
+    if (len > 0)
+    {
+        for (int i = 0; i < len; i++)
+        {
+            val[i] = line[start + i];
+        }
+        val[len] = '\0';
+    }
+    else
+    {
+        val[0] = '\0';
+    }
+
+    // trim leading spaces
     int vs = 0;
-    while (vout[vs] == ' ') vs++;
+    while (val[vs] == ' ') vs++;
     if (vs > 0)
     {
-        memmove(vout, vout + vs, strlen(vout) - vs + 1);
+        char tmp2[256];
+        for (int i = 0; val[vs + i] != '\0'; i++)
+        {
+            tmp2[i] = val[vs + i];
+        }
+        tmp2[strlen(val) - vs] = '\0';
+        strcopy(val, vlen, tmp2);
     }
-    vlen2 = strlen(vout);
-    while (vlen2 > 0 && vout[vlen2 - 1] == ' ') { vout[vlen2 - 1] = '\0'; vlen2--; }
+    // trim trailing spaces
+    int vlen2 = strlen(val);
+    while (vlen2 > 0 && val[vlen2 - 1] == ' ') { val[vlen2 - 1] = '\0'; vlen2--; }
 
-    return StrCompare(kout, key, false) == 0;
+    return true;
 }
 
 stock void LoadHkiaTokenTables()
