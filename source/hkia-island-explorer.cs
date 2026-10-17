@@ -92,17 +92,17 @@ class HkiaIslandExplorer
         }
 
         // Launch HKIA in windowed mode so Melty can capture its window during the test.
-        // Unity games support -windowed and -screen-width/-screen-height on the command line.
+        // Unity games support -windowed, -screen-fullscreen 0 and -popupwindow.
         string hkiaExe = Path.Combine(gamePath, "Hello Kitty.exe");
         if (File.Exists(hkiaExe))
         {
             try
             {
-                Process.Start(hkiaExe, "-windowed -screen-width 1280 -screen-height 720");
+                Process.Start(hkiaExe, "-windowed -screen-fullscreen 0 -popupwindow -screen-width 1280 -screen-height 720");
             }
             catch
             {
-                // HKIA may already be running (Melty may have launched it); that's OK.
+                // HKIA may already be running; that's OK.
             }
         }
 
