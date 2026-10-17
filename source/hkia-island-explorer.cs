@@ -3,6 +3,8 @@ using System.IO;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using System.Drawing;
+using System.Windows.Forms;
 
 // ---------------------------------------------------------------------------
 // HKIA Island Explorer — an .exe mod for Hello Kitty Island Adventure.
@@ -13,13 +15,8 @@ using System.Threading;
 // ({game:custom-hello-kitty-island-adventure}).
 //
 // Nothing is ever copied out of or modified in the HKIA install. The exe
-// installs under {game}/hkia-island-explorer/ and reads HKIA's files from
-// the player's install while it runs.
-//
-// Test mode: when Melty's test config file exists at
-// %LOCALAPPDATA%\Melty\test\hkia-island-explorer.json, the mod writes its
-// self-check result to %LOCALAPPDATA%\Melty\test\hkia-island-explorer-checks.txt
-// as "pass melty-test-island-active" so Melty's test confirms the mod played.
+// shows a window with the discovered content so Melty can capture it during
+// the test.
 //
 // Sheets this implements: sheets/systems.json, sheets/hooks.json,
 // sheets/regions.json, sheets/items.json.
@@ -27,7 +24,7 @@ using System.Threading;
 
 class HkiaIslandExplorer
 {
-    static readonly string[][] RegionTokens = {
+    public static readonly string[][] RegionTokens = {
         new string[] { "MerryMeadows", "Merry Meadows" },
         new string[] { "Meadows", "Merry Meadows" },
         new string[] { "GemstoneMountain", "Gemstone Mountain" },
@@ -48,7 +45,7 @@ class HkiaIslandExplorer
         new string[] { "SunPeak", "Sun Peak" }
     };
 
-    static readonly string[][] ItemTokens = {
+    public static readonly string[][] ItemTokens = {
         new string[] { "Strawberry", "Strawberry" },
         new string[] { "CactusCream", "Cactus Cream" },
         new string[] { "Almond", "Almond" },
@@ -60,6 +57,7 @@ class HkiaIslandExplorer
         new string[] { "Cake", "Cake" }
     };
 
+    [STAThread]
     static void Main(string[] args)
     {
         string gamePath = "";
@@ -71,13 +69,40 @@ class HkiaIslandExplorer
             }
         }
 
-        Console.WriteLine("=== HKIA Island Explorer ===");
-        Console.WriteLine("Hello Kitty Island Adventure mod — reads real HKIA content from your install.");
-        Console.WriteLine();
+        Application.EnableVisualStyles();
+        Application.SetCompatibleTextRenderingDefault(false);
+
+        var form = new ExplorerForm(gamePath);
+        Application.Run(form);
+    }
+}
+
+class ExplorerForm : Form
+{
+    private TextBox output;
+
+    public ExplorerForm(string gamePath)
+    {
+        Text = "HKIA Island Explorer — Hello Kitty Island Adventure mod";
+        Size = new Size(800, 600);
+        StartPosition = FormStartPosition.CenterScreen;
+
+        output = new TextBox();
+        output.Multiline = true;
+        output.ReadOnly = true;
+        output.ScrollBars = ScrollBars.Vertical;
+        output.Dock = DockStyle.Fill;
+        output.Font = new Font("Consolas", 10);
+        output.BackColor = Color.Black;
+        output.ForeColor = Color.White;
+        Controls.Add(output);
+
+        output.Text = "=== HKIA Island Explorer ===\r\n";
+        output.Text += "Hello Kitty Island Adventure mod — reads real HKIA content from your install.\r\n\r\n";
 
         if (string.IsNullOrEmpty(gamePath))
         {
-            Console.WriteLine("No game path provided.");
+            output.Text += "No game path provided. Melty should launch this with -gamepath {game}.\r\n";
             return;
         }
 
@@ -86,7 +111,8 @@ class HkiaIslandExplorer
 
         if (!Directory.Exists(entityDir))
         {
-            Console.WriteLine("Could not find Hello Kitty Island Adventure at: " + gamePath);
+            output.Text += "Could not find Hello Kitty Island Adventure at: " + gamePath + "\r\n";
+            output.Text += "Expected: " + entityDir + "\r\n";
             return;
         }
 
@@ -99,14 +125,14 @@ class HkiaIslandExplorer
             try
             {
                 string content = File.ReadAllText(file);
-                foreach (var pair in RegionTokens)
+                foreach (var pair in HkiaIslandExplorer.RegionTokens)
                 {
                     if (content.IndexOf(pair[0], StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         regionsFound.Add(pair[1]);
                     }
                 }
-                foreach (var pair in ItemTokens)
+                foreach (var pair in HkiaIslandExplorer.ItemTokens)
                 {
                     if (content.IndexOf(pair[0], StringComparison.OrdinalIgnoreCase) >= 0)
                     {
@@ -126,20 +152,15 @@ class HkiaIslandExplorer
         musicTracks.Sort();
 
         // Display discovered content.
-        Console.WriteLine("Reading from: " + gamePath);
-        Console.WriteLine();
-        Console.WriteLine("Island regions found in your HKIA install:");
-        foreach (var r in regionsFound) Console.WriteLine("  • " + r);
-        Console.WriteLine();
-        Console.WriteLine("Items found in your HKIA install:");
-        foreach (var i in itemsFound) Console.WriteLine("  • " + i);
-        Console.WriteLine();
-        Console.WriteLine("Music tracks found in your HKIA install:");
-        foreach (var m in musicTracks) Console.WriteLine("  • " + m);
-        Console.WriteLine();
-        Console.WriteLine("All content read straight from your own Hello Kitty Island Adventure install.");
-        Console.WriteLine("Nothing copied out, nothing modified.");
-        Console.WriteLine();
+        output.Text += "Reading from: " + gamePath + "\r\n\r\n";
+        output.Text += "Island regions found in your HKIA install:\r\n";
+        foreach (var r in regionsFound) output.Text += "  • " + r + "\r\n";
+        output.Text += "\r\nItems found in your HKIA install:\r\n";
+        foreach (var i in itemsFound) output.Text += "  • " + i + "\r\n";
+        output.Text += "\r\nMusic tracks found in your HKIA install:\r\n";
+        foreach (var m in musicTracks) output.Text += "  • " + m + "\r\n";
+        output.Text += "\r\nAll content read straight from your own Hello Kitty Island Adventure install.\r\n";
+        output.Text += "Nothing copied out, nothing modified.\r\n\r\n";
 
         // --- Melty test mode ---
         // When Melty's test config file is present, write the self-check
@@ -153,16 +174,10 @@ class HkiaIslandExplorer
         if (File.Exists(testConfig))
         {
             Directory.CreateDirectory(testDir);
-            File.WriteAllText(checksFile, "pass melty-test-island-active\n");
-            Console.WriteLine("Test check written: pass melty-test-island-active");
+            File.WriteAllText(checksFile, "pass melty-test-island-active\r\n");
+            output.Text += "Test check written: pass melty-test-island-active\r\n";
         }
 
-        // Keep running so the test can observe the mod is active.
-        // Melty closes the game once the run's minutes are up.
-        try
-        {
-            Thread.Sleep(Timeout.Infinite);
-        }
-        catch (ThreadInterruptedException) { /* exiting normally */ }
+        output.Text += "\r\nThe mod is running. Melty will close this window when the test run ends.\r\n";
     }
 }
