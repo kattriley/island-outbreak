@@ -3,9 +3,10 @@
 #pragma newdecls required
 
 #define PLUGIN_VERSION "1.0"
-#define LOG_FILE "islandoutbreak.log"
 #define MARKER_PREFIX "MELTY_TEST_ISLAND_ACTIVE"
-#define HOST_PREFIX "Melty hosting at "
+#define HOST_PREFIX "Melty join address: "
+#define JOIN_PREFIX "Melty joined: "
+#define FAIL_PREFIX "Melty join failed: "
 
 // ---------------------------------------------------------------------------
 // Island Outbreak — a Left 4 Dead 2 x Hello Kitty Island Adventure mashup.
@@ -13,19 +14,30 @@
 // Host (primary):   Left 4 Dead 2 — the player is in it.
 // Companion:        Hello Kitty Island Adventure — its island regions and
 //                   items are read from the player's own installed copy at
-//                   runtime via the -island_path launch argument that Melty
-//                   passes ({game:custom-hello-kitty-island-adventure}).
+//                   runtime via the -island_path launch argument Melty passes.
 //                   Nothing is ever copied out of either game.
+//
+// Melty multiplayer contract:
+//   - At start, read join= from {localappdata}/island-outbreak/melty.properties
+//     (passed as -melty_props). Empty => host; an address => join.
+//   - When hosting: write "Melty join address: <ip>:<port>" to melty.log
+//     (passed as -melty_log).
+//   - When joining: connect to the address, write "Melty joined: <address>"
+//     or "Melty join failed: <why>" to melty.log.
 //
 // Sheets this implements: sheets/systems.json, sheets/hooks.json,
 // sheets/regions.json, sheets/items.json.
 // ---------------------------------------------------------------------------
 
 char g_IslandPath[260] = "";
+char g_MeltyProps[260] = "";
+char g_MeltyLog[260] = "";
 char g_Region[64] = "";
 char g_Item[64] = "";
 bool g_ThemeApplied = false;
 bool g_HostLogged = false;
+bool g_IsJoiner = false;
+char g_JoinAddress[128] = "";
 
 public Action Command_Theme(int client, int args)
 {
@@ -34,8 +46,7 @@ public Action Command_Theme(int client, int args)
 }
 
 // HKIA region/item tokens, discovered from real entity-name strings in the
-// player's HKIA install (StreamingAssets/EntityScenes/*.entities). Display
-// names paired with the token that identifies them in HKIA's own files.
+// player's HKIA install (StreamingAssets/EntityScenes/*.entities).
 char g_RegionTokens[40][64];
 char g_RegionNames[40][64];
 int g_RegionCount = 0;
@@ -47,10 +58,35 @@ int g_ItemCount = 0;
 public void OnPluginStart()
 {
     GetCommandLineParam("-island_path", g_IslandPath, sizeof(g_IslandPath));
+    GetCommandLineParam("-melty_props", g_MeltyProps, sizeof(g_MeltyProps));
+    GetCommandLineParam("-melty_log", g_MeltyLog, sizeof(g_MeltyLog));
+
     LoadHkiaTokenTables();
     LoadHkiaData();
 
-    LogToFile(LOG_FILE, "Island Outbreak v%s loaded (ISLAND_PATH=%s)", PLUGIN_VERSION, g_IslandPath);
+    LogToFile("islandoutbreak.log", "Island Outbreak v%s loaded (ISLAND_PATH=%s)", PLUGIN_VERSION, g_IslandPath);
+
+    // --- Melty multiplayer: decide host vs join ---
+    char props[512];
+    if (ReadFileString(g_MeltyProps, props, sizeof(props)))
+    {
+        char key[32];
+        char val[256];
+        if (ParseKeyValue(props, "join", key, sizeof(key), val, sizeof(val)) && val[0] != '\0')
+        {
+            g_IsJoiner = true;
+            strcopy(g_JoinAddress, sizeof(g_JoinAddress), val);
+            LogToFile("islandoutbreak.log", "Island Outbreak: join mode, target=%s", g_JoinAddress);
+            // Try connecting to the host's address right away.
+            char cmd[160];
+            Format(cmd, sizeof(cmd), "connect %s", g_JoinAddress);
+            engine.ServerCommand(cmd);
+            return;
+        }
+    }
+
+    // Host mode: when the local player (client 1) spawns into the listen
+    // server, publish the address to melty.log.
     RegConsoleCmd("sm_island_theme", Command_Theme, "Force-apply the Island Outbreak safe-room theme (test)");
 }
 
@@ -63,16 +99,15 @@ public void OnMapStart()
 
 public void OnClientPutInServer(int client)
 {
-    // Melty multiplayer: publish the listen-server address so friends can
-    // join with one click (connect.address reads this log line).
-    if (!IsDedicatedServer() && !g_HostLogged && client == 1)
+    // Melty multiplayer: host publishes its listen-server address.
+    if (!g_IsJoiner && !g_HostLogged && client == 1)
     {
         g_HostLogged = true;
         char ip[64];
         GetClientIP(client, ip, sizeof(ip));
         ConVar portCvar = FindConVar("hostport");
         int port = portCvar ? GetConVarInt(portCvar) : 27015;
-        LogToFile(LOG_FILE, "%s%s:%d", HOST_PREFIX, ip, port);
+        WriteMeltyLog("%s%s:%d", HOST_PREFIX, ip, port);
     }
 
     // Safe-room theme: the host player has spawned into the safe room.
@@ -80,6 +115,15 @@ public void OnClientPutInServer(int client)
     {
         g_ThemeApplied = true;
         ApplyTheme();
+    }
+}
+
+// Joiner: once connected, confirm in melty.log.
+public void OnClientConnected(int client)
+{
+    if (g_IsJoiner && client == 1)
+    {
+        WriteMeltyLog("%s%s", JOIN_PREFIX, g_JoinAddress);
     }
 }
 
@@ -94,7 +138,74 @@ stock void ApplyTheme()
         g_Region, g_Item);
     PrintToChatAll(msg);
 
-    LogToFile(LOG_FILE, "%s:%s|%s", MARKER_PREFIX, g_Region, g_Item);
+    LogToFile("islandoutbreak.log", "%s:%s|%s", MARKER_PREFIX, g_Region, g_Item);
+}
+
+stock void WriteMeltyLog(const char[] format, any ...)
+{
+    if (g_MeltyLog[0] == '\0')
+    {
+        return;
+    }
+
+    char msg[256];
+    VFormat(msg, sizeof(msg), format);
+
+    Handle h = OpenFile(g_MeltyLog, "a", false);
+    if (h)
+    {
+        LogToOpenFile(h, "%s", msg);
+        CloseHandle(h);
+    }
+}
+
+// Read a file into a buffer.
+stock bool ReadFileString(char[] path, char[] out, int outlen)
+{
+    Handle h = OpenFile(path, "r", false);
+    if (!h)
+    {
+        return false;
+    }
+    bool ok = ReadFileLine(h, out, outlen) != 0;
+    CloseHandle(h);
+    return ok;
+}
+
+// Parse "key=value" from a line of text.
+stock bool ParseKeyValue(char[] line, const char[] key, char[] kout, int klen, char[] vout, int vlen)
+{
+    char eq[2];
+    eq[0] = '=';
+    eq[1] = '\0';
+    int idx = StrFind(line, eq);
+    if (idx == -1)
+    {
+        return false;
+    }
+    int klen2 = idx;
+    if (klen2 >= klen) klen2 = klen - 1;
+    strcopy(kout, klen2 + 1, line);
+    kout[klen2] = '\0';
+    // trim trailing spaces from key
+    while (klen2 > 0 && kout[klen2 - 1] == ' ') { kout[klen2 - 1] = '\0'; klen2--; }
+
+    int vstart = idx + 1;
+    int vlen2 = strlen(line) - vstart;
+    if (vlen2 >= vlen) vlen2 = vlen - 1;
+    strcopy(vout, vlen2 + 1, line + vstart);
+    vout[vlen2] = '\0';
+    // trim leading/trailing spaces from value
+    int vs = 0;
+    while (vout[vs] == ' ') vs++;
+    if (vs > 0)
+    {
+        memmove(vout, vout + vs, strlen(vout) - vs + 1);
+    }
+    vlen2 = strlen(vout);
+    while (vlen2 > 0 && vout[vlen2 - 1] == ' ') { vout[vlen2 - 1] = '\0'; vlen2--; }
+
+    return StrCompare(kout, key, false) == 0;
 }
 
 stock void LoadHkiaTokenTables()
@@ -208,7 +319,6 @@ stock void ScanFile(char[] path)
     CloseHandle(h);
 }
 
-// Keeps a comma list of discovered names inside a fixed buffer.
 stock void AddUnique(char[] list, int listlen, const char[] name)
 {
     if (StrContains(list, name, false) != -1)
